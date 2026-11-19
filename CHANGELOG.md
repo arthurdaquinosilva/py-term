@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- History, the debug log and crash reports are readable only by you: the data folder is now `0700` and those files `0600`. Before, `history.sqlite` was readable by other accounts on the machine.
+
 ## 0.1.0
 
 First release of :py, a modern interactive Python shell with IPython's power and a calm terminal UI.

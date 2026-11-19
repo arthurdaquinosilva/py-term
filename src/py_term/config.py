@@ -9,6 +9,8 @@ from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
+from py_term.utils import make_private
+
 XMODES = ("minimal", "plain", "context", "verbose")
 INTERACTIVITY = ("last_expr", "all", "last", "none", "last_expr_or_assign")
 AUTOAWAIT = ("asyncio", "trio", "curio", "off")
@@ -139,6 +141,11 @@ class Profile:
                 d.mkdir(parents=True, exist_ok=True)
             except OSError:
                 pass
+        # the data folder holds history, logs and crash reports: owner only, up to the py-term folder
+        for d in (self.data_dir, *self.data_dir.parents):
+            make_private(d, directory=True)
+            if d.name == "py-term":
+                break
 
 
 def _base(env: str, fallback: str) -> Path:

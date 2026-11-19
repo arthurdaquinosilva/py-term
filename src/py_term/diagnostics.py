@@ -18,6 +18,8 @@ from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TextIO
 
+from py_term.utils import make_private
+
 if TYPE_CHECKING:
     from py_term.config import Profile
 
@@ -56,6 +58,7 @@ def setup_logging(profile: Profile | None, level: int | None) -> Path | None:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         handler: logging.Handler = logging.handlers.RotatingFileHandler(path, maxBytes=1_000_000, backupCount=2, encoding="utf-8")
+        make_private(path)
     except OSError:
         return None
     handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-7s %(name)s: %(message)s"))
@@ -77,7 +80,7 @@ def crash_dir(profile: Profile | None) -> Path:
         return profile.data_dir / "crashes"
     import tempfile
 
-    return Path(tempfile.gettempdir()) / "py-term-crashes"
+    return Path(tempfile.gettempdir()) / f"py-term-crashes-{os.getuid() if hasattr(os, 'getuid') else 'user'}"
 
 
 def write_crash_report(exc: BaseException, profile: Profile | None, where: str = "") -> Path | None:
@@ -96,8 +99,11 @@ def write_crash_report(exc: BaseException, profile: Profile | None, where: str =
         "",
     ]
     try:
-        directory.mkdir(parents=True, exist_ok=True)
-        path.write_text("\n".join(lines), encoding="utf-8")
+        directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        make_private(directory, directory=True)
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
     except OSError:
         return None
     _prune(directory, keep=20)

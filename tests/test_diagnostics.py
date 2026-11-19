@@ -197,3 +197,47 @@ def test_repl_gives_up_after_repeated_internal_errors(shell):
 
     repl.read = read
     assert repl.run() == 70
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX permissions")
+def test_private_data_is_owner_only(profile):
+    import stat
+
+    from py_term.history import HistoryManager
+
+    def mode(p):
+        return stat.S_IMODE(p.stat().st_mode)
+
+    profile.ensure()
+    assert mode(profile.data_dir) == 0o700
+    history = HistoryManager(profile.history_db)
+    history.db.close()
+    assert mode(profile.history_db) == 0o600
+    report = diagnostics.write_crash_report(ValueError("x"), profile)
+    assert report is not None and mode(report) == 0o600
+    assert mode(report.parent) == 0o700
+    log = diagnostics.setup_logging(profile, logging.DEBUG)
+    try:
+        assert log is not None and mode(log) == 0o600
+    finally:
+        for h in list(diagnostics.log.handlers):
+            if not isinstance(h, logging.NullHandler):
+                diagnostics.log.removeHandler(h)
+                h.close()
+        diagnostics.log.setLevel(logging.NOTSET)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX permissions")
+def test_named_profile_makes_the_base_folder_private(tmp_path, monkeypatch):
+    import stat
+
+    from py_term.config import load_profile
+
+    (tmp_path / "share").mkdir(mode=0o755)
+    (tmp_path / "share").chmod(0o755)
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "share"))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    profile = load_profile("work")
+    for d in (profile.data_dir, tmp_path / "share" / "py-term"):
+        assert stat.S_IMODE(d.stat().st_mode) == 0o700
+    assert stat.S_IMODE((tmp_path / "share").stat().st_mode) == 0o755  # XDG_DATA_HOME itself is left alone

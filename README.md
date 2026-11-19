@@ -7,9 +7,9 @@
 **A modern, beautiful interactive Python shell.**
 IPython's power — magics, history, debugging, extensions — rebuilt around a calm terminal UI.
 
-[![release](https://img.shields.io/github/v/tag/arthurdaquinosilva/py-term?label=release)](https://github.com/arthurdaquinosilva/py-term/tags)
+[![release](https://img.shields.io/github/v/release/arthurdaquinosilva/py-term?label=release)](https://github.com/arthurdaquinosilva/py-term/releases/latest)
 [![tests](https://github.com/arthurdaquinosilva/py-term/actions/workflows/tests.yml/badge.svg)](https://github.com/arthurdaquinosilva/py-term/actions/workflows/tests.yml)
-[![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://github.com/arthurdaquinosilva/py-term/blob/main/pyproject.toml)
+[![python](https://img.shields.io/badge/python-3.10%E2%80%933.14-blue)](https://github.com/arthurdaquinosilva/py-term/blob/main/pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-green)](https://github.com/arthurdaquinosilva/py-term/blob/main/LICENSE)
 
 </div>
