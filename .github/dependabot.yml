@@ -7,7 +7,12 @@ updates:
     groups:
       actions:
         patterns: ["*"]
-  - package-ecosystem: pip # bumps the pinned linters in the dev extras
+  - package-ecosystem: pip
     directory: /
     schedule:
       interval: weekly
+    # Only the linters pinned in the dev extras. Runtime dependencies keep low minimums on
+    # purpose (see docs/releasing.md), so Dependabot must not raise them.
+    allow:
+      - dependency-name: ruff
+      - dependency-name: mypy
