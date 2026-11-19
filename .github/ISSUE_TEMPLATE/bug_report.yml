@@ -1,0 +1,31 @@
+name: Bug report
+description: Something in :py doesn't work as it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The smallest input that shows the problem, ideally starting from `:py --no-startup`.
+      render: python
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `:py --doctor`
+      description: Run it in the same terminal where the problem happens and paste everything.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: crash
+    attributes:
+      label: Crash report (if any)
+      description: If :py printed `internal error in :py … report: …`, paste the contents of that file.
+      render: text

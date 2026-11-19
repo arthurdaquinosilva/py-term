@@ -1,0 +1,48 @@
+"""Terminal key encodings: modified Enter inserts a newline; other modified keys don't leak as text."""
+
+import pytest
+from prompt_toolkit.input.vt100_parser import Vt100Parser
+from prompt_toolkit.keys import Keys
+
+from py_term.ui import ENABLE_MODIFIED_KEYS  # importing py_term.ui registers the key sequences
+
+
+def parse(data: str):
+    keys = []
+    parser = Vt100Parser(keys.append)
+    parser.feed(data)
+    parser.flush()
+    return [k.key for k in keys]
+
+
+@pytest.mark.parametrize("seq", ["\x1b[13;2u", "\x1b[27;2;13~", "\x1b[13;6u", "\x1b[13;5u", "\x1b[27;5;13~"])
+def test_modified_enter_is_newline(seq):
+    assert parse(seq) == [Keys.ControlJ]
+
+
+def test_requests_modify_other_keys():
+    assert ENABLE_MODIFIED_KEYS == "\x1b[>4;1m"
+
+
+def test_plain_enter_still_submits():
+    assert parse("\r") == [Keys.ControlM]
+
+
+def test_other_modified_keys_are_ignored_not_inserted():
+    assert parse("\x1b[53;6u\x1b[13;2u") == [Keys.Ignore, Keys.ControlJ]
+
+
+def test_wordmark_is_four_lines_of_half_blocks():
+    from py_term.banner import pixel_rows
+
+    rows = pixel_rows(":PY")
+    assert len(rows) == 4
+    assert set("".join(rows)) <= set("█▀▄ ")
+    assert rows[0].startswith(" ▄▄ █▀▀▀▄")
+
+
+def test_layout_setting(shell):
+    shell.run_cell("%config layout=box")
+    assert shell.settings.layout == "box"
+    shell.run_cell("%config layout=sideways")
+    assert not shell.last_ok

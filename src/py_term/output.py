@@ -1,0 +1,161 @@
+"""Stream proxies that draw a left rail beside cell output, plus a live 'running' spinner."""
+
+from __future__ import annotations
+
+import io
+import re
+import threading
+import time
+from typing import TextIO
+
+_SPLIT = re.compile(r"(\r\n|\n|\r)")
+FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+STAR_FRAMES = ("·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢")  # the rule layout's, as in :sql
+REST = "     "  # the rule layout indents output five columns, under a `  ⎿  ` on the first line
+
+
+def format_duration(seconds: float) -> str:
+    if seconds < 1e-6:
+        return f"{seconds * 1e9:.0f}ns"
+    if seconds < 1e-3:
+        return f"{seconds * 1e6:.1f}µs"
+    if seconds < 1:
+        return f"{seconds * 1e3:.1f}ms"
+    if seconds < 60:
+        return f"{seconds:.2f}s"
+    m, s = divmod(seconds, 60)
+    return f"{int(m)}m {s:.0f}s"
+
+
+class RailState:
+    """Shared between stdout and stderr so both agree on where the cursor is.
+
+    With `first`, the first visible line gets that prefix instead (the `rule` layout's `  ⎿  `)."""
+
+    def __init__(self, prefix: str, first: str | None = None):
+        self.prefix = prefix
+        self.first = first
+        self.first_used = first is None
+        self.at_line_start = True
+        self.wrote = False
+        self.lock = threading.RLock()
+
+    def take(self) -> str:
+        if self.first_used:
+            return self.prefix
+        self.first_used = True
+        return self.first or self.prefix
+
+
+class Spinner:
+    def __init__(self, real: TextIO, state: RailState, render, delay: float = 0.25, frames=FRAMES):
+        self.real = real
+        self.frames = frames
+        self.state = state
+        self.render = render  # (frame, elapsed) -> ansi str
+        self.delay = delay
+        self.shown = False
+        self.enabled = real.isatty()
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+        self.started = time.perf_counter()
+
+    def start(self) -> None:
+        if not self.enabled:
+            return
+        self.started = time.perf_counter()
+        self._thread = threading.Thread(target=self._run, name="py-term-spinner", daemon=True)
+        self._thread.start()
+
+    def _run(self) -> None:
+        i = 0
+        while not self._stop.wait(0.08):
+            elapsed = time.perf_counter() - self.started
+            if elapsed < self.delay:
+                continue
+            with self.state.lock:
+                if self._stop.is_set() or not self.state.at_line_start:
+                    continue
+                self.real.write("\r\x1b[2K" + self.render(self.frames[i % len(self.frames)], elapsed))
+                self.real.flush()
+                self.shown = True
+            i += 1
+
+    def clear(self) -> None:
+        """Erase the spinner line. Caller holds state.lock."""
+        if self.shown:
+            self.real.write("\r\x1b[2K")
+            self.shown = False
+
+    def stop(self) -> None:
+        self._stop.set()
+        with self.state.lock:
+            self.clear()
+            self.real.flush()
+        if self._thread and self._thread is not threading.current_thread():
+            self._thread.join(timeout=0.5)
+
+
+class RailWriter(io.TextIOBase):
+    def __init__(self, real: TextIO, state: RailState, spinner: Spinner | None = None, spacer: bool = True):
+        self.real = real
+        self.state = state
+        self.spinner = spinner
+        self.spacer = spacer
+
+    def write(self, s: str) -> int:
+        if not isinstance(s, str):
+            raise TypeError(f"write() argument must be str, not {type(s).__name__}")
+        if not s:
+            return 0
+        st = self.state
+        with st.lock:
+            if self.spinner:
+                self.spinner.clear()
+            out: list[str] = []
+            if self.spacer and not st.wrote and st.at_line_start:
+                out.append(st.prefix.rstrip() + "\n")  # breathing room below the echoed code
+            for piece in _SPLIT.split(s):
+                if not piece:
+                    continue
+                if piece in ("\n", "\r\n"):
+                    if st.at_line_start:
+                        out.append(st.prefix.rstrip() if st.prefix else "")
+                    out.append("\n")
+                    st.at_line_start = True
+                elif piece == "\r":
+                    out.append("\r")
+                    st.at_line_start = True
+                else:
+                    if st.at_line_start:
+                        out.append(st.take())
+                        st.at_line_start = False
+                    out.append(piece)
+            self.real.write("".join(out))
+            self.real.flush()
+            st.wrote = True
+        return len(s)
+
+    def flush(self) -> None:
+        self.real.flush()
+
+    def isatty(self) -> bool:
+        return self.real.isatty()
+
+    def fileno(self) -> int:
+        return self.real.fileno()
+
+    def writable(self) -> bool:
+        return True
+
+    @property
+    def encoding(self) -> str:  # type: ignore[override]
+        return getattr(self.real, "encoding", "utf-8")
+
+    @property
+    def errors(self) -> str | None:  # type: ignore[override]
+        return getattr(self.real, "errors", None)
+
+    @property
+    def buffer(self):
+        return self.real.buffer
