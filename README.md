@@ -118,7 +118,6 @@ python -m venv .venv && .venv/bin/pip install -e '.[dev]'
 ## Known limits
 
 - Terminal only, no Jupyter kernel. Images and `%matplotlib inline` are drawn on kitty, Ghostty, iTerm2, WezTerm and mintty (also inside tmux); other terminals show a placeholder.
-- `!cmd` streams through a pipe, so fully interactive programs (vim, less) should run outside :py.
 - With the real IPython installed, :py leaves it untouched, so libraries calling IPython's own `get_ipython()` see no shell.
 
 ## License

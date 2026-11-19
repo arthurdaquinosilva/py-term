@@ -15,6 +15,7 @@ from rich.columns import Columns
 from rich.table import Table
 from rich.text import Text
 
+from py_term import pty_run
 from py_term.display import short_path
 from py_term.magics import LINE_MAGICS, MagicError, MagicSpec, cell_magic, line_magic, parse_args
 from py_term.utils import SList, arg_split
@@ -27,7 +28,12 @@ if TYPE_CHECKING:
 
 
 def run_command(shell: Shell, cmd: str | list[str], capture: bool = False, stdin: str | None = None) -> SList | int:
-    """Stream a command's output through the cell (or capture it as an SList). Returns the exit code when streaming."""
+    """Stream a command's output through the cell (or capture it as an SList). Returns the exit code when streaming.
+
+    In an interactive session the command runs in a pseudo-terminal, so programs that need one
+    (vim, less, htop, ssh, password prompts) work; captured output and piped input use pipes."""
+    if not capture and stdin is None and shell.settings.pty and pty_run.available():
+        return _run_in_pty(shell, cmd)
     env = dict(os.environ, FORCE_COLOR="1", CLICOLOR_FORCE="1", PYTHONUNBUFFERED="1")
     if capture:
         env.pop("FORCE_COLOR")
@@ -61,6 +67,29 @@ def run_command(shell: Shell, cmd: str | list[str], capture: bool = False, stdin
     if proc.returncode:
         shell.print(Text(f"exit {proc.returncode}", style="py_term.err"))
     return proc.returncode
+
+
+def _run_in_pty(shell: Shell, cmd: str | list[str]) -> int:
+    from py_term.utils import real_stdout
+
+    shell.pause_output()  # the spinner would draw over the command's screen
+    rail = shell._rail
+    indent = pty_run.visible_width(rail.prefix) if rail is not None else 0
+    terminal = real_stdout()
+    out = sys.stdout
+
+    def write_raw(data: bytes) -> None:
+        out.flush()
+        terminal.flush()
+        view = memoryview(data)
+        while view:
+            view = view[os.write(terminal.fileno(), view) :]
+
+    code = pty_run.run(cmd, out.write, write_raw, indent=indent)
+    out.flush()
+    if code:
+        shell.print(Text(f"exit {code}", style="py_term.err"))
+    return code
 
 
 def _feed(pipe: Any, data: str) -> None:

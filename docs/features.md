@@ -158,6 +158,8 @@ Range syntax: `4`, `4-6` (inclusive), `4:6` (end exclusive), `~1/` (the whole pr
 
 ## Shell and files
 
+`!cmd` runs a command in a pseudo-terminal, so it behaves as it would in your shell: `!vim notes.md`, `!htop`, `!less log.txt`, `!git log` (with its pager), `!ssh host`, `!sudo …` and anything that asks for input all work. Keys go straight to the command, and Ctrl+C stops the command, not :py. Ordinary output hangs under the `⎿` like any other output (the command is told the terminal is narrower by the indent, so its own wrapping fits). Full-screen programs get the whole window and leave it as they found it. `!!cmd`, `x = !cmd` and `%sx` capture output through a pipe instead, as does running :py with piped input; `pty = false` turns the pseudo-terminal off.
+
 - `%cd` with `-` (previous directory), `-N` (entry N of `%dhist`), `-b name` (bookmark), and bookmark names as a fallback.
 - `%bookmark name [dir]`, `%pushd` / `%popd` / `%dirs`, `%dhist`.
 - `%alias name command` with `%s` placeholders or `%l` for the whole line; defaults include `ll`, `cat`, `cp`, `mv`, `rm`, `mkdir`.

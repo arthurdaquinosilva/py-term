@@ -34,6 +34,7 @@ class Settings:
     gui: str = ""
     matplotlib: str = ""
     images: str = "auto"
+    pty: bool = True
     store_autorestore: bool = False
     history_log_output: bool = True
     exec_lines: list[str] = field(default_factory=list)
