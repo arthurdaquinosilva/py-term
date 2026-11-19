@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import builtins
 import inspect
+import os
 import re
 import shlex
 import sys
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Any, TextIO
 
 
@@ -18,6 +20,15 @@ def real_stdout() -> TextIO:
 
 def real_stderr() -> TextIO:
     return sys.__stderr__ or sys.stderr
+
+
+def make_private(path: Path, directory: bool = False) -> None:
+    """Restrict a file to the owner (0600) or a directory to the owner (0700). History, logs and
+    crash reports can quote the user's code, so other accounts on the machine shouldn't read them."""
+    try:
+        os.chmod(path, 0o700 if directory else 0o600)
+    except OSError:
+        pass
 
 
 class Struct(dict):

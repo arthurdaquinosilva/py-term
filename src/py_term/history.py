@@ -13,6 +13,8 @@ from typing import NamedTuple
 
 from prompt_toolkit.history import History
 
+from py_term.utils import make_private
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS sessions (
     session INTEGER PRIMARY KEY AUTOINCREMENT, start TIMESTAMP, end TIMESTAMP, num_cmds INTEGER, remark TEXT
@@ -44,6 +46,8 @@ class HistoryManager:
         try:
             self.db = sqlite3.connect(self.path, check_same_thread=False, isolation_level=None)
             self.db.executescript(SCHEMA)
+            if self.path != ":memory:":
+                make_private(Path(self.path))
         except sqlite3.Error:
             self.path = ":memory:"
             self.db = sqlite3.connect(":memory:", check_same_thread=False, isolation_level=None)
