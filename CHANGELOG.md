@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **`!cmd` runs in a pseudo-terminal**: interactive programs work inside :py: `!vim`, `!htop`, `!less`, `!git log` with its pager, `!ssh`, `!sudo` and prompts that ask for input. Keys go to the command, Ctrl+C stops the command rather than :py, full-screen programs get the whole window, and ordinary output still hangs under the `⎿`. Captured output (`!!cmd`, `x = !cmd`, `%sx`) and piped input still use pipes; `pty = false` turns it off.
 - The rule layout leaves a blank line between your code and its first output, like the block and box layouts.
 - **Images in the terminal**: `%matplotlib inline` draws figures under the cell, and `Image`, PIL images, figures and anything with an image repr are drawn too, on terminals with the kitty graphics protocol (kitty, Ghostty) or iTerm2 inline images (iTerm2, WezTerm, mintty), also inside tmux with `allow-passthrough on`. Other terminals show a placeholder. The new `images` setting (`auto`, `kitty`, `iterm`, `off`) and `PY_TERM_IMAGES` override detection, and `:py --doctor` reports it.
 - History, the debug log and crash reports are readable only by you: the data folder is now `0700` and those files `0600`. Before, `history.sqlite` was readable by other accounts on the machine.

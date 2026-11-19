@@ -49,6 +49,7 @@ ast_node_interactivity = "last_expr"  # last_expr · all · last · none · last
 gui = ""                           # keep an event loop running: qt · tk · osx · gtk3 · gtk4 · wx · asyncio
 matplotlib = ""                    # activate a matplotlib backend at startup: "inline", "macosx", …
 images = "auto"                    # inline images: auto · kitty · iterm · off
+pty = true                         # run !cmd in a pseudo-terminal so interactive programs work
 store_autorestore = false          # restore %store variables at startup
 history_log_output = true          # save a repr of each output in the history database
 exec_lines = []                    # code to run at startup, e.g. ["import numpy as np"]
