@@ -34,7 +34,7 @@ dependencies = [
     "prompt_toolkit>=3.0.43",
     "rich>=13.8",
     "jedi>=0.19",
-    "pygments>=2.15",
+    "pygments>=2.21.0",
     "tomli>=2.0; python_version < '3.11'",
 ]
 
