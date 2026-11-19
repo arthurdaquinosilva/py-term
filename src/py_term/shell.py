@@ -537,7 +537,7 @@ class Shell:
                 ),
             )
         self._rail = state
-        spacer = not plain and not rule
+        spacer = not plain  # a blank line between the echoed code and its first output, in every layout
         out = RailWriter(real_out, state, spinner, spacer=spacer)
         err = RailWriter(real_err, state, spinner, spacer=spacer)
         saved = sys.stdout, sys.stderr, builtins.input
@@ -560,8 +560,8 @@ class Shell:
             self._spinner = None
             if not state.at_line_start:
                 real_out.write("\n")
-            if state.wrote and spacer:
-                real_out.write(state.prefix.rstrip() + "\n")  # breathing room above the footer
+            if state.wrote and spacer and not rule:
+                real_out.write(state.prefix.rstrip() + "\n")  # breathing room above the footer (the rule layout's footer hugs the output)
             real_out.flush()
 
     def _display_result(self, value: Any) -> None:
