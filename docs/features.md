@@ -179,7 +179,30 @@ GUI windows only respond when an event loop runs, and at the prompt nothing does
 %gui asyncio           # background asyncio tasks keep running between cells
 ```
 
-`plt.ion()` alone also hooks matplotlib into :py. `%matplotlib inline` needs a notebook and isn't available.
+`plt.ion()` alone also hooks matplotlib into :py.
+
+### Plots and images in the terminal
+
+On terminals that can draw images, `%matplotlib inline` puts figures right under the cell, like a notebook: everything a cell draws is shown when it finishes (or at `plt.show()`), then closed. Images show up the same way:
+
+```python
+%matplotlib inline
+plt.plot(data)                  # drawn under the cell
+fig                             # a Figure as a result is drawn too
+Image("chart.png")              # IPython.display.Image: PNG, JPEG, GIF
+PIL.Image.open("photo.jpg")     # anything with _repr_png_ / _repr_jpeg_ / an image mime bundle
+SVG("diagram.svg")              # needs cairosvg to rasterise
+```
+
+| Terminal | Protocol |
+| --- | --- |
+| kitty, Ghostty | kitty graphics protocol (JPEG and GIF need Pillow) |
+| iTerm2, WezTerm, mintty | iTerm2 inline images |
+| inside tmux | either of the above through passthrough: add `set -g allow-passthrough on` to `~/.tmux.conf` |
+
+Anywhere else, or when output isn't a terminal, you get a one-line placeholder with the image's size. Detection reads the environment; if your terminal supports a protocol :py doesn't recognise, set `images = "kitty"` or `"iterm"` (or `PY_TERM_IMAGES`), and `images = "off"` turns it off. `:py --doctor` shows what was detected. Images are sized from their pixels and shrunk to fit the window. Objects that also have a LaTeX form (sympy expressions) stay text.
+
+Limits: tmux forgets images when it redraws (switching windows or panes), and GNU screen can't pass them through. Sixel terminals (foot, Windows Terminal, xterm) aren't supported yet.
 
 ## Completion
 
