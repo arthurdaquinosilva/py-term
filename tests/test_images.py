@@ -196,9 +196,17 @@ def test_draws_in_reserved_rows(force, monkeypatch):
     console = terminal_console()
     console.print(images.TerminalImage(png(80, 64)))  # 10 columns × 4 rows
     out = console.file.getvalue()
-    assert out.startswith("\x1b[m\n\n\n\x1b[3A\x1b]1337;File=")
+    # a blank margin line, 3 more newlines to reserve the image's rows, back up 3, draw
+    assert out.startswith("\x1b[m\n\n\n\n\x1b[3A\x1b]1337;File=")
     assert "width=10;height=4" in out
-    assert out.endswith("\a\x1b[3B\n")
+    # back down to the last row, end it, then a blank margin line
+    assert out.endswith("\a\x1b[3B\n\n")
+
+
+def test_no_top_margin_for_a_cells_first_output():
+    segments = list(images.image_segments("IMG", 3, margin_top=False))
+    assert segments[0].text == "\x1b[m\n\n\x1b[2AIMG\x1b[2B"
+    assert [s.text for s in segments[1:]] == ["\n", "\n"]
 
 
 def test_single_row_image_moves_nowhere(force, monkeypatch):

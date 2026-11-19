@@ -288,19 +288,32 @@ class TerminalImage:
         terminal_rows = shutil.get_terminal_size(fallback=(80, 24)).lines
         cols, rows = fit(size, cell_size(), max(1, options.max_width), max(1, terminal_rows - 3), (self.width, self.height))
         seq = kitty_sequence(data, cols, rows, sup.tmux) if sup.protocol == "kitty" else iterm_sequence(data, cols, rows, sup.tmux)
-        yield from image_segments(seq, rows)
+        yield from image_segments(seq, rows, margin_top=not _first_output_of_cell())
 
 
-def image_segments(seq: str, rows: int) -> Iterable[Segment]:
+def image_segments(seq: str, rows: int, margin_top: bool = True, margin_bottom: bool = True) -> Iterable[Segment]:
     """Reserve `rows` lines, go back to the top, draw (the cursor stays put), then return to the bottom.
 
     Everything is one control segment, so Rich neither measures nor wraps the long escape sequence.
-    It starts with a no-op SGR reset so that a line prefix (the `⎿` under a cell) goes on the image's
-    first row rather than below it."""
+    It starts with a no-op SGR reset so that a line prefix (the `⎿` under a cell) is written before
+    the reserved rows: on the blank margin line, or on the image's first row when there's no margin.
+    A blank line above and below keeps the image from touching the text around it."""
     up = f"{_ESC}[{rows - 1}A" if rows > 1 else ""
     down = f"{_ESC}[{rows - 1}B" if rows > 1 else ""
-    yield Segment(f"{_ESC}[m" + "\n" * (rows - 1) + up + seq + down, None, [(ControlType.BELL,)])
+    top = "\n" if margin_top else ""
+    yield Segment(f"{_ESC}[m" + top + "\n" * (rows - 1) + up + seq + down, None, [(ControlType.BELL,)])
     yield Segment.line()
+    if margin_bottom:
+        yield Segment.line()
+
+
+def _first_output_of_cell() -> bool:
+    """True when nothing has been printed under the current cell yet, so the image can start on the
+    `⎿` line instead of below a blank one."""
+    from py_term.shell import Shell
+
+    rail = getattr(Shell.active, "_rail", None)
+    return rail is not None and not rail.wrote
 
 
 def _setting() -> str:
