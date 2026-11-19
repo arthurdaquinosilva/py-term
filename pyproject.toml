@@ -32,7 +32,7 @@ classifiers = [
 ]
 dependencies = [
     "prompt_toolkit>=3.0.43",
-    "rich>=13.8",
+    "rich>=15.0.0",
     "jedi>=0.19",
     "pygments>=2.15",
     "tomli>=2.0; python_version < '3.11'",
