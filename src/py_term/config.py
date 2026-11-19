@@ -40,7 +40,11 @@ class Settings:
     def validate(self, name: str, value: Any) -> Any:
         """Coerce and check a value for setting `name`; raises ValueError/KeyError."""
         spec = {f.name: f for f in fields(self)}[name]
-        default = spec.default if spec.default is not dataclasses.MISSING else spec.default_factory()  # type: ignore[misc]
+        default: Any = None
+        if spec.default is not dataclasses.MISSING:
+            default = spec.default
+        elif spec.default_factory is not dataclasses.MISSING:
+            default = spec.default_factory()
         if isinstance(value, str) and not isinstance(default, str):
             try:
                 value = ast.literal_eval(value)

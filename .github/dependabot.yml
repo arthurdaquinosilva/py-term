@@ -7,3 +7,7 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+  - package-ecosystem: pip # bumps the pinned linters in the dev extras
+    directory: /
+    schedule:
+      interval: weekly
