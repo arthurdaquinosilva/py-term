@@ -31,7 +31,7 @@ classifiers = [
     "Topic :: Terminals",
 ]
 dependencies = [
-    "prompt_toolkit>=3.0.43",
+    "prompt_toolkit>=3.0.53",
     "rich>=13.8",
     "jedi>=0.19",
     "pygments>=2.15",
