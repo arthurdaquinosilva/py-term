@@ -164,12 +164,74 @@ class _Placeholder(DisplayObject):
         )
 
 
+def _pixels(value: Any) -> int | None:
+    try:
+        return int(value) if value else None
+    except (TypeError, ValueError):
+        return None
+
+
 class Image(_Placeholder):
+    """Drawn inline on terminals with the kitty or iTerm2 image protocol; a placeholder elsewhere."""
+
     label = "image"
+
+    def _bytes(self) -> bytes | None:
+        if isinstance(self.data, bytes):
+            return self.data
+        if isinstance(self.data, str):
+            import base64
+
+            try:
+                return base64.b64decode(self.data, validate=True)
+            except ValueError:
+                return None
+        return None
+
+    def _repr_png_(self) -> bytes | None:
+        from py_term.images import image_format
+
+        data = self._bytes()
+        return data if data and image_format(data) == "png" else None
+
+    def _repr_jpeg_(self) -> bytes | None:
+        from py_term.images import image_format
+
+        data = self._bytes()
+        return data if data and image_format(data) == "jpeg" else None
+
+    def __rich__(self) -> RenderableType:
+        from py_term.images import TerminalImage
+
+        data = self._bytes()
+        if data is None:
+            return super().__rich__()
+        width, height = _pixels(self.options.get("width")), _pixels(self.options.get("height"))
+        if self.options.get("retina") and data:
+            from py_term.images import image_size
+
+            if (size := image_size(data)) and not (width or height):
+                width, height = size[0] // 2, size[1] // 2
+        return TerminalImage(data, "image", width, height, source=self.filename or "")
 
 
 class SVG(_Placeholder):
+    """Rasterised with cairosvg when it's installed, then drawn like an Image."""
+
     label = "svg"
+
+    def _repr_svg_(self) -> str:
+        return self.data.decode() if isinstance(self.data, bytes) else str(self.data or "")
+
+    def __rich__(self) -> RenderableType:
+        from py_term.images import TerminalImage, _setting, support, svg_to_png
+
+        if self.data and (png := svg_to_png(self.data)) is not None:
+            return TerminalImage(png, "svg", source=self.filename or "")
+        placeholder = super().__rich__()
+        if self.data and support(_setting()).protocol is not None and isinstance(placeholder, Text):
+            placeholder.append("  · install cairosvg to draw SVG", style="py_term.faint")
+        return placeholder
 
 
 class Audio(_Placeholder):

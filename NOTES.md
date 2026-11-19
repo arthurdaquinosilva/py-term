@@ -48,7 +48,7 @@ Snapshot from 2026-11-19: sections 1–5 done, heading for the first release, 0.
 
 ## 6. Product gaps (from README "Known limits")
 
-- [ ] Inline images through the kitty or iTerm2 graphics protocols (`%matplotlib inline`, `Image`, `SVG`).
+- [x] Inline images through the kitty or iTerm2 graphics protocols (`%matplotlib inline`, `Image`, `SVG`). Sixel (foot, Windows Terminal, xterm) is still open.
 - [ ] A PTY for `!cmd` so interactive programs (vim, less) work.
 - [ ] Better coexistence when the real IPython is installed.
 - [ ] Decide on Windows support, yes or no, and say so.

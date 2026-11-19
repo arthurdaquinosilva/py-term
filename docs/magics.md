@@ -394,4 +394,4 @@ Keep a GUI event loop running at the prompt: %gui qt|tk|osx|gtk3|gtk4|wx|asyncio
 
 ### `%matplotlib`
 
-Interactive matplotlib windows that stay responsive: %matplotlib [qt|tk|osx|…] · -l list.
+Matplotlib figures in the terminal (inline) or in responsive windows: %matplotlib [inline|qt|tk|osx|…] · -l list.

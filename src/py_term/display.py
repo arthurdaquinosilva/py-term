@@ -152,6 +152,50 @@ def _mime_renderable(bundle: Any) -> RenderableType | None:
     return None
 
 
+def _image_renderable(value: Any, call: Any) -> RenderableType | None:
+    """Figures and objects with image reprs (PIL images, graphviz, …), when the terminal can draw them.
+
+    Objects that also offer LaTeX (sympy expressions) stay text, like in terminal IPython."""
+    from py_term import images
+
+    setting = getattr(getattr(_active_shell(), "settings", None), "images", "auto")
+    if images.support(setting).protocol is None:
+        return None
+    if images.is_figure(value):
+        png = images.figure_png(value)
+        return images.TerminalImage(png, "figure") if png else None
+    if call("_repr_latex_") is not None:
+        return None
+    bundle = call("_repr_mimebundle_")
+    if isinstance(bundle, tuple):
+        bundle = bundle[0]
+    if isinstance(bundle, dict) and (image := images.from_mime(bundle)) is not None:
+        return image
+    for name, mime in (("_repr_png_", "image/png"), ("_repr_jpeg_", "image/jpeg"), ("_repr_svg_", "image/svg+xml")):
+        if (data := call(name)) is not None and (image := images.from_mime({mime: data})) is not None:
+            return image
+    if _generic_repr(value) and call("_repr_svg_") is not None:
+        return Text.assemble(("▣ ", "py_term.accent"), ("svg", "py_term.fg"), ("  · install cairosvg to draw SVG", "py_term.faint"))
+    return None
+
+
+def _generic_repr(value: Any) -> bool:
+    """True when an object's repr says nothing useful, like `<IPython.core.display.SVG object>`."""
+    if type(value).__repr__ is object.__repr__:
+        return True
+    try:
+        text = repr(value)
+    except Exception:
+        return False
+    return text.startswith("<") and text.endswith(" object>")
+
+
+def _active_shell() -> Any:
+    from py_term.shell import Shell
+
+    return Shell.active
+
+
 def render_value(value: Any, precision: str = "", printers: Any = None) -> RenderableType:
     """Pick the richest terminal rendering an object offers.
 
@@ -182,6 +226,8 @@ def render_value(value: Any, precision: str = "", printers: Any = None) -> Rende
         except Exception:
             return None
 
+    if (image := _image_renderable(value, call)) is not None:
+        return image
     if (bundle := call("_repr_mimebundle_")) is not None and (r := _mime_renderable(bundle)) is not None:
         return r
     if isinstance(md := call("_repr_markdown_"), (str, tuple)):

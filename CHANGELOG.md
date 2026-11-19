@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Images in the terminal**: `%matplotlib inline` draws figures under the cell, and `Image`, PIL images, figures and anything with an image repr are drawn too, on terminals with the kitty graphics protocol (kitty, Ghostty) or iTerm2 inline images (iTerm2, WezTerm, mintty), also inside tmux with `allow-passthrough on`. Other terminals show a placeholder. The new `images` setting (`auto`, `kitty`, `iterm`, `off`) and `PY_TERM_IMAGES` override detection, and `:py --doctor` reports it.
 - History, the debug log and crash reports are readable only by you: the data folder is now `0700` and those files `0600`. Before, `history.sqlite` was readable by other accounts on the machine.
 
 ## 0.1.0

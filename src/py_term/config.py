@@ -16,6 +16,7 @@ INTERACTIVITY = ("last_expr", "all", "last", "none", "last_expr_or_assign")
 AUTOAWAIT = ("asyncio", "trio", "curio", "off")
 EDITING_MODES = ("emacs", "vi")
 LAYOUTS = ("rule", "block", "box")
+IMAGES = ("auto", "kitty", "iterm", "off")
 
 
 @dataclass
@@ -32,6 +33,7 @@ class Settings:
     ast_node_interactivity: str = "last_expr"
     gui: str = ""
     matplotlib: str = ""
+    images: str = "auto"
     store_autorestore: bool = False
     history_log_output: bool = True
     exec_lines: list[str] = field(default_factory=list)
@@ -68,6 +70,7 @@ class Settings:
             "autoawait": AUTOAWAIT,
             "editing_mode": EDITING_MODES,
             "layout": LAYOUTS,
+            "images": IMAGES,
         }.get(name)
         if choices:
             value = value.lower()

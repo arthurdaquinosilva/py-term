@@ -364,10 +364,27 @@ class Shell:
         self.gui = gui
         self.settings.gui = gui
 
+    def _flush_inline_figures(self) -> None:
+        """With `%matplotlib inline`, show the figures a cell drew under its output."""
+        if "matplotlib" not in sys.modules:
+            return
+        from py_term import mpl_inline
+
+        if mpl_inline.is_active():
+            try:
+                mpl_inline.flush_figures()
+            except Exception as e:
+                log.debug("showing inline figures failed", exc_info=True)
+                self.print(Text(f"could not draw the figure: {e}", style="py_term.warn"))
+
     def enable_matplotlib(self, name: str | None = None) -> tuple[str | None, str]:
         import matplotlib
 
-        if name:
+        if name and name.lower() == "inline":
+            from py_term.mpl_inline import BACKEND
+
+            backend = BACKEND
+        elif name:
             key = name.lower()
             gui = inputhooks.normalize_gui(key)
             backend = inputhooks.GUI_BACKEND.get(key) or inputhooks.GUI_BACKEND.get(gui or "") or name
@@ -657,6 +674,7 @@ class Shell:
                             self.post_mortem(e.__traceback__)
                         except MagicError:
                             pass
+                self._flush_inline_figures()
                 self.autoreload.record_new()
                 self.ipy.events.trigger("post_execute")
                 self.ipy.events.trigger("post_run_cell", result)

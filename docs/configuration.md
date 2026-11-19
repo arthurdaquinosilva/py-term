@@ -47,7 +47,8 @@ autoawait = "asyncio"              # asyncio · trio · curio · off
 precision = ""                     # float display: "3" or a %-format like "%.2e"
 ast_node_interactivity = "last_expr"  # last_expr · all · last · none · last_expr_or_assign
 gui = ""                           # keep an event loop running: qt · tk · osx · gtk3 · gtk4 · wx · asyncio
-matplotlib = ""                    # activate a matplotlib backend at startup, e.g. "macosx"
+matplotlib = ""                    # activate a matplotlib backend at startup: "inline", "macosx", …
+images = "auto"                    # inline images: auto · kitty · iterm · off
 store_autorestore = false          # restore %store variables at startup
 history_log_output = true          # save a repr of each output in the history database
 exec_lines = []                    # code to run at startup, e.g. ["import numpy as np"]
@@ -131,5 +132,6 @@ Errors in your code are shown as tracebacks as usual. An error inside :py (a bug
 | `PY_TERM_THEME` | Overrides `theme` |
 | `PY_TERM_PROFILE` | Default profile name |
 | `PY_TERM_LOG` | Turn on the log: `debug`, `info`, `warning` (or `1` for debug) |
+| `PY_TERM_IMAGES` | Overrides `images` (handy over ssh) |
 | `VISUAL` / `EDITOR` | Editor for Ctrl+O, `%edit` |
 | `XDG_CONFIG_HOME`, `XDG_DATA_HOME` | Base directories |

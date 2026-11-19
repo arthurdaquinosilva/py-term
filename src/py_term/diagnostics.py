@@ -30,7 +30,7 @@ LOG_FILE_NAME = "py-term.log"
 _LEVELS = {"1": logging.DEBUG, "true": logging.DEBUG, "yes": logging.DEBUG, "on": logging.DEBUG}
 
 CORE_DEPENDENCIES = ("prompt_toolkit", "rich", "jedi", "pygments", "tomli")
-OPTIONAL_PACKAGES = ("IPython", "numpy", "pandas", "polars", "matplotlib", "trio", "curio", "line_profiler")
+OPTIONAL_PACKAGES = ("IPython", "numpy", "pandas", "polars", "matplotlib", "pillow", "cairosvg", "trio", "curio", "line_profiler")
 
 
 def log_level(debug: bool = False, env: str | None = None) -> int | None:
@@ -224,6 +224,10 @@ def doctor(profile: Profile | None, warnings: list[str], log_path: Path | None =
     facts = terminal_facts()
     for key, value in facts.items():
         row(key, value)
+    from py_term import images
+
+    settings_images = _configured_images(profile)
+    row("inline images", images.detect(settings_images, tty=facts["tty"] or None).describe())
     if not facts["tty"]:
         out.write("  (stdout is not a terminal here, e.g. piped: the facts above may not match your interactive session)\n")
 
@@ -252,6 +256,15 @@ def doctor(profile: Profile | None, warnings: list[str], log_path: Path | None =
 
     out.write("\n" + ("\n".join(f"✗ {p}" for p in problems) if problems else "✓ no problems found") + "\n")
     return 1 if problems else 0
+
+
+def _configured_images(profile: Profile | None) -> str:
+    try:
+        from py_term.config import load_settings
+
+        return load_settings(profile)[0].images
+    except Exception:
+        return "auto"
 
 
 def _size(path: Path) -> str:
