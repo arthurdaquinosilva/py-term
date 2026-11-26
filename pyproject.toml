@@ -39,7 +39,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "pyte", "pexpect", "ruff==0.17.5", "mypy==2.4.1", "pre-commit", "build"]  # linters pinned so CI and local runs agree
+dev = ["pytest", "pytest-cov", "pyte", "pexpect", "ruff==0.17.6", "mypy==2.4.1", "pre-commit", "build"]  # linters pinned so CI and local runs agree
 trio = ["trio"]
 curio = ["curio"]
 
